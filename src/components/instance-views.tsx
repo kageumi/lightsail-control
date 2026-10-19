@@ -1,55 +1,27 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  Check,
-  Circle,
-  CircleAlert,
-  CircleCheck,
-  Copy,
-  History,
-  Play,
-  Power,
-  Repeat2,
-  RotateCw,
-  Server,
-} from "lucide-react";
+import { Check, CircleAlert, CircleCheck, Copy, RotateCw } from "lucide-react";
 import type { Row } from "@/instance-selection";
-import type { ConsoleController, Activity } from "@/hooks/use-console";
+import type { Activity, ConsoleController } from "@/hooks/use-console";
 import type { OperationAction } from "@/operations";
 import {
   actionLabels,
+  dateLabel,
   regionLabel,
   stateLabel,
-  dateLabel,
 } from "@/lib/display";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardAction,
-} from "@/components/ui/card";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyContent,
-} from "@/components/ui/empty";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -60,22 +32,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function StateBadge({ row }: { row: Row }) {
-  const running = row.state.name === "running";
+function StateBadge({ state }: { state: string }) {
   return (
-    <Badge variant={running ? "secondary" : "outline"}>
-      {["pending", "stopping"].includes(row.state.name) ? (
-        <Spinner />
-      ) : running ? (
-        <CircleCheck />
-      ) : (
-        <Circle />
-      )}
-      {stateLabel(row.state.name)}
+    <Badge variant={state === "running" ? "secondary" : "outline"}>
+      {["pending", "stopping"].includes(state) && <Spinner />}
+      {stateLabel(state)}
     </Badge>
   );
 }
-export function CopyButton({
+
+function CopyButton({
   value,
   label = "复制 IP",
 }: {
@@ -83,7 +49,7 @@ export function CopyButton({
   label?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const timer = useRef<number | undefined>(undefined);
+  const timer = useRef<number>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
   async function copy() {
     if (!value) return;
@@ -114,14 +80,14 @@ export function CopyButton({
     </Button>
   );
 }
+
 export function OperationFeedback({
   controller: c,
 }: {
   controller: ConsoleController;
 }) {
-  if (!c.job && !(c.instance && c.error) && !c.notice && !c.result) return null;
   return (
-    <div className="flex flex-col gap-2" aria-live="polite">
+    <div className="flex flex-col gap-2 empty:hidden" aria-live="polite">
       {c.job && (
         <Alert>
           <Spinner />
@@ -149,6 +115,7 @@ export function OperationFeedback({
     </div>
   );
 }
+
 function ConfirmAction({
   action,
   controller: c,
@@ -162,37 +129,36 @@ function ConfirmAction({
   variant?: "outline" | "default" | "destructive";
   disabled: boolean;
 }) {
+  const stop = action === "stop";
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant={variant} className="min-w-24" disabled={disabled}>
+        <Button variant={variant} className="min-w-20" disabled={disabled}>
           {children}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent aria-describedby={undefined}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {action === "stop" ? "确认停止实例？" : "确认更换公网 IP？"}
-          </AlertDialogTitle>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogTitle>
+          {stop ? "确认停止实例？" : "确认更换公网 IP？"}
+        </AlertDialogTitle>
+        <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
           <AlertDialogCancel>取消</AlertDialogCancel>
           <AlertDialogAction
-            variant={action === "stop" ? "destructive" : "default"}
+            variant={stop ? "destructive" : "default"}
             onClick={() => void c.operate(action)}
           >
             确认{actionLabels[action]}
           </AlertDialogAction>
-        </AlertDialogFooter>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
-export function Controls({ controller: c }: { controller: ConsoleController }) {
+
+function Controls({ controller: c }: { controller: ConsoleController }) {
   const row = c.instance!;
   const disabled = c.loading || !!c.job || !!c.error;
   const running = row.state.name === "running";
-  const stopped = row.state.name === "stopped";
   return (
     <div className="flex flex-wrap items-center gap-2">
       <ConfirmAction
@@ -201,16 +167,14 @@ export function Controls({ controller: c }: { controller: ConsoleController }) {
         variant="default"
         disabled={disabled || !running || !!row.isStaticIp}
       >
-        <Repeat2 data-icon="inline-start" />
         更换 IP
       </ConfirmAction>
-      {stopped ? (
+      {row.state.name === "stopped" ? (
         <Button
-          className="min-w-24"
+          className="min-w-20"
           disabled={disabled}
           onClick={() => void c.operate("start")}
         >
-          <Play data-icon="inline-start" />
           开机
         </Button>
       ) : (
@@ -219,184 +183,102 @@ export function Controls({ controller: c }: { controller: ConsoleController }) {
           controller={c}
           disabled={disabled || !running}
         >
-          <Power data-icon="inline-start" />
           关机
         </ConfirmAction>
       )}
     </div>
   );
 }
-export function InstancePanel({
-  controller: c,
+
+function Info({
+  label,
+  value,
+  wide,
 }: {
-  controller: ConsoleController;
+  label: string;
+  value?: ReactNode;
+  wide?: boolean;
 }) {
-  const row = c.instance!;
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight break-words sm:text-3xl">
-            {row.name}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {regionLabel(row.region)} · {row.region}
-          </p>
-        </div>
-        <div className="shrink-0">
-          <StateBadge row={row} />
-        </div>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>公网 IPv4</h2>
-          </CardTitle>
-          <CardAction>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={c.loading || !!c.job}
-              onClick={() => void c.refresh()}
-            >
-              {c.loading ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <RotateCw data-icon="inline-start" />
-              )}
-              刷新状态
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="text-3xl font-semibold tracking-tight tabular-nums break-all sm:text-4xl">
-              {row.publicIpAddress ?? "—"}
-            </span>
-            <CopyButton value={row.publicIpAddress} />
-          </div>
-          <Controls controller={c} />
-        </CardContent>
-      </Card>
+    <div className={cn("min-w-0", wide && "col-span-2 sm:col-span-1")}>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm font-medium break-words whitespace-pre-wrap">
+        {value ?? "—"}
+      </dd>
     </div>
   );
 }
-function DefinitionList({ items }: { items: [string, ReactNode, string?][] }) {
-  return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-      {items.map(([label, value, className]) => (
-        <div key={label} className={cn("min-w-0", className)}>
-          <dt className="text-xs text-muted-foreground">{label}</dt>
-          <dd className="mt-1 text-sm font-medium whitespace-pre-wrap break-words">
-            {value ?? "—"}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-export function ServerDetails({
-  controller: c,
-}: {
-  controller: ConsoleController;
-}) {
-  const row = c.instance!;
+
+function ServerDetails({ row }: { row: Row }) {
   const disks = row.hardware?.disks;
   const total =
-    disks?.length && disks.every((d) => d.sizeInGb !== undefined)
-      ? disks.reduce((sum, d) => sum + (d.sizeInGb ?? 0), 0)
+    disks?.length && disks.every((disk) => disk.sizeInGb !== undefined)
+      ? disks.reduce((sum, disk) => sum + (disk.sizeInGb ?? 0), 0)
       : undefined;
+  const value = (number: number | undefined, unit: string) =>
+    number === undefined ? undefined : `${number} ${unit}`;
   const ssh =
     row.username && row.publicIpAddress
       ? `ssh ${row.username}@${row.publicIpAddress}`
       : undefined;
+  const details: [string, ReactNode, boolean?][] = [
+    ["处理器", value(row.hardware?.cpuCount, "vCPU")],
+    ["内存", value(row.hardware?.ramSizeInGb, "GB")],
+    ["存储", value(total, "GB")],
+    ["系统", row.blueprintName],
+    ["套餐", row.bundleId],
+    ["可用区", row.location?.availabilityZone],
+    ["私网 IPv4", row.privateIpAddress],
+    [
+      "IPv6",
+      row.ipv6Addresses?.length ? (
+        <span className="font-mono text-xs">
+          {row.ipv6Addresses.join("\n")}
+        </span>
+      ) : undefined,
+      true,
+    ],
+    [
+      "地址类型",
+      row.isStaticIp === undefined
+        ? undefined
+        : row.isStaticIp
+          ? "静态 IP"
+          : "动态 IP",
+    ],
+  ];
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          <h2 id="server-title">服务器</h2>
+          <h2>服务器</h2>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <DefinitionList
-          items={[
-            [
-              "处理器",
-              row.hardware?.cpuCount === undefined
-                ? undefined
-                : `${row.hardware.cpuCount} vCPU`,
-            ],
-            [
-              "内存",
-              row.hardware?.ramSizeInGb === undefined
-                ? undefined
-                : `${row.hardware.ramSizeInGb} GB`,
-            ],
-            ["存储", total === undefined ? undefined : `${total} GB`],
-            ["系统", row.blueprintName],
-            ["套餐", row.bundleId],
-            ["可用区", row.location?.availabilityZone],
-            ["私网 IPv4", row.privateIpAddress],
-            [
-              "IPv6",
-              row.ipv6Addresses?.length ? (
-                <span className="font-mono text-xs">
-                  {row.ipv6Addresses.join("\n")}
-                </span>
-              ) : undefined,
-              "col-span-2 sm:col-span-1",
-            ],
-            [
-              "地址类型",
-              row.isStaticIp === undefined
-                ? undefined
-                : row.isStaticIp
-                  ? "静态 IP"
-                  : "动态 IP",
-            ],
-          ]}
-        />
-        {disks && disks.length > 1 && (
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-            {disks.map((disk, i) => (
-              <p key={i}>
-                磁盘 {i + 1} ·{" "}
-                {disk.isSystemDisk === undefined
-                  ? "—"
-                  : disk.isSystemDisk
-                    ? "系统盘"
-                    : "数据盘"}{" "}
-                · {disk.sizeInGb === undefined ? "—" : `${disk.sizeInGb} GB`}
-              </p>
-            ))}
-          </div>
-        )}
-        <Separator />
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-4">
-            <h3 className="text-sm font-medium">SSH</h3>
-            <CopyButton value={ssh} label="复制 SSH 命令" />
-          </div>
-          <code className="block overflow-x-auto rounded-lg bg-muted px-3 py-2 font-mono text-xs whitespace-nowrap">
+      <CardContent className="flex flex-col gap-5">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+          {details.map(([label, content, wide]) => (
+            <Info key={label} label={label} value={content} wide={wide} />
+          ))}
+        </dl>
+        <div className="h-px bg-border" />
+        <div className="flex items-center gap-2">
+          <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-muted px-3 py-2 font-mono text-xs whitespace-nowrap">
             {ssh ?? "—"}
           </code>
+          <CopyButton value={ssh} label="复制 SSH 命令" />
         </div>
       </CardContent>
     </Card>
   );
 }
-export function HistoryView({ history }: { history: Activity[] }) {
+
+function History({ history }: { history: Activity[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          <h2 id="history-title">操作记录</h2>
+          <h2>操作记录</h2>
         </CardTitle>
-        {history.length > 0 && (
-          <CardAction>
-            <Badge variant="outline">{history.length}</Badge>
-          </CardAction>
-        )}
       </CardHeader>
       <CardContent>
         {history.length ? (
@@ -422,7 +304,7 @@ export function HistoryView({ history }: { history: Activity[] }) {
                       >
                         {entry.failed ? "失败" : "完成"}
                       </Badge>
-                      <span className="max-w-72 text-xs whitespace-normal text-muted-foreground">
+                      <span className="max-w-64 text-xs whitespace-normal text-muted-foreground">
                         {entry.message}
                       </span>
                     </div>
@@ -444,19 +326,65 @@ export function HistoryView({ history }: { history: Activity[] }) {
             </TableBody>
           </Table>
         ) : (
-          <Empty className="py-10">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <History />
-              </EmptyMedia>
-              <EmptyTitle>暂无操作记录</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            暂无操作记录
+          </p>
         )}
       </CardContent>
     </Card>
   );
 }
+
+export function InstanceView({
+  controller: c,
+}: {
+  controller: ConsoleController;
+}) {
+  const row = c.instance!;
+  return (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight break-words sm:text-3xl">
+            {row.name}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {regionLabel(row.region)} · {row.region}
+          </p>
+        </div>
+        <StateBadge state={row.state.name} />
+      </div>
+      <Card>
+        <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">公网 IPv4</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-3xl font-semibold tracking-tight tabular-nums break-all sm:text-4xl">
+                {row.publicIpAddress ?? "—"}
+              </span>
+              <CopyButton value={row.publicIpAddress} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Controls controller={c} />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="刷新状态"
+              disabled={c.loading || !!c.job}
+              onClick={() => void c.refresh()}
+            >
+              {c.loading ? <Spinner /> : <RotateCw />}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <ServerDetails row={row} />
+      <History history={c.history} />
+    </>
+  );
+}
+
 export function NoInstance({
   error,
   refresh,
@@ -466,31 +394,21 @@ export function NoInstance({
   refresh: () => Promise<void>;
   loading: boolean;
 }) {
-  const empty = error.includes("没有找到实例");
   return (
     <Card>
-      <Empty className="py-20">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            {empty ? <Server /> : <CircleAlert />}
-          </EmptyMedia>
-          <EmptyTitle>{empty ? "没有可控制的实例" : error}</EmptyTitle>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button
-            variant="outline"
-            disabled={loading}
-            onClick={() => void refresh()}
-          >
-            {loading ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <RotateCw data-icon="inline-start" />
-            )}
-            重试
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+        <p className="text-sm text-muted-foreground">
+          {error.includes("没有找到实例") ? "没有可控制的实例" : error}
+        </p>
+        <Button
+          variant="outline"
+          disabled={loading}
+          onClick={() => void refresh()}
+        >
+          {loading && <Spinner data-icon="inline-start" />}
+          重试
+        </Button>
+      </CardContent>
     </Card>
   );
 }

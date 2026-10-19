@@ -26,8 +26,7 @@ interface ConsoleState {
   error: string;
   notice: string;
   result: string;
-  updated?: number;
-  job?: { action: OperationAction; message: string; started: number };
+  job?: { message: string };
   history: Activity[];
 }
 export function useConsole() {
@@ -100,7 +99,7 @@ export function useConsole() {
         }
       } else latest = await discover();
       if (version === generation.current && current.current.authenticated)
-        patch({ instance: latest, updated: Date.now() });
+        patch({ instance: latest });
     } catch (error) {
       if (version === generation.current) patch({ error: messageOf(error) });
     } finally {
@@ -159,13 +158,7 @@ export function useConsole() {
       void refresh();
     }, 10_000);
     return () => window.clearTimeout(timer);
-  }, [
-    state.authenticated,
-    state.job,
-    state.instance,
-    state.updated,
-    state.loading,
-  ]);
+  }, [state.authenticated, state.job, state.instance, state.loading]);
   async function login(password: string) {
     if (busy.current || current.current.loading) return;
     sessionAbort.current = new AbortController();
@@ -213,7 +206,7 @@ export function useConsole() {
     busy.current = true;
     const version = generation.current;
     patch({
-      job: { action, message: "检查实例状态", started: Date.now() },
+      job: { message: "检查实例状态" },
       notice: "",
       result: "",
     });
@@ -235,11 +228,7 @@ export function useConsole() {
             await request<Instance>(`instance?${query}`),
             row.region,
           );
-          if (version === generation.current)
-            patch({
-              instance: latest,
-              updated: Date.now(),
-            });
+          if (version === generation.current) patch({ instance: latest });
           return latest;
         },
         command: async (command, rotate) => {
@@ -248,7 +237,7 @@ export function useConsole() {
         signal: sessionAbort.current.signal,
         progress: (message) => {
           if (version === generation.current && current.current.job)
-            patch({ job: { ...current.current.job, message } });
+            patch({ job: { message } });
         },
         now: Date.now,
         sleep: (ms) =>
@@ -268,9 +257,7 @@ export function useConsole() {
       });
       if (version !== generation.current || !mounted.current) return;
       if (result.newIp && result.newIp !== result.oldIp) {
-        patch({
-          job: { ...current.current.job!, message: "正在同步订阅配置" },
-        });
+        patch({ job: { message: "正在同步订阅配置" } });
         try {
           await request("sub", { ip: result.newIp });
         } catch (error) {

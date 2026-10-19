@@ -1,22 +1,10 @@
-import { LogOut, Moon, Server, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import type { ReactNode } from "react";
 import type { ConsoleController } from "@/hooks/use-console";
 import { Button } from "@/components/ui/button";
 
-export function Brand() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Server className="size-4" aria-hidden="true" />
-      </span>
-      <span className="text-lg font-semibold tracking-tight">
-        Lightsail<span className="text-primary">.</span>
-      </span>
-    </div>
-  );
-}
-export function ThemeButton() {
+function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   return (
     <Button
@@ -29,6 +17,33 @@ export function ThemeButton() {
     </Button>
   );
 }
+
+export function TopBar({ controller }: { controller?: ConsoleController }) {
+  return (
+    <header className="border-b">
+      <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
+        <span className="text-lg font-semibold tracking-tight">
+          Lightsail<span className="text-primary">.</span>
+        </span>
+        <div className="flex items-center gap-1">
+          <ThemeButton />
+          {controller && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="退出登录"
+              disabled={controller.loading || !!controller.job}
+              onClick={() => void controller.logout()}
+            >
+              <LogOut />
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export function ConsoleLayout({
   controller,
   children,
@@ -44,29 +59,13 @@ export function ConsoleLayout({
       >
         跳到主要内容
       </a>
-      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
-          <Brand />
-          <div className="flex items-center gap-1">
-            <ThemeButton />
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="退出登录"
-              disabled={controller.loading || !!controller.job}
-              onClick={() => void controller.logout()}
-            >
-              <LogOut />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <TopBar controller={controller} />
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 outline-none sm:px-6 sm:py-10"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 outline-none sm:px-6"
       >
-        <div className="flex flex-col gap-6">{children}</div>
+        <div className="flex flex-col gap-5">{children}</div>
       </main>
     </div>
   );
