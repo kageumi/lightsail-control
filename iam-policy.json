@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["lightsail:GetInstances", "lightsail:GetRegions"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "lightsail:GetInstance",
+        "lightsail:StartInstance",
+        "lightsail:StopInstance"
+      ],
+      "Resource": ["arn:aws:lightsail:*:YOUR_ACCOUNT_ID:Instance/*"]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env*
+!.env.example
+.DS_Store
+.npm-cache/
+.agents/
+skills-lock.json

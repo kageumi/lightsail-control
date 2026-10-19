@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+tests/.wrangler/
+package-lock.json
+.dev.vars
+*.md

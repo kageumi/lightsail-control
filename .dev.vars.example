@@ -1,0 +1,4 @@
+AWS_ACCESS_KEY_ID=replace-me
+AWS_SECRET_ACCESS_KEY=replace-me
+ADMIN_PASSWORD=replace-with-a-long-random-password
+# AWS_SESSION_TOKEN=optional

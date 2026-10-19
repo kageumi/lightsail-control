@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lightsail-control",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "build": {
+    "command": "npm run build",
+    "watch_dir": ["src", "index.html", "vite.config.ts"],
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "vars": { "AWS_REGIONS": "" },
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "lightsail.unicom.top",
+      "custom_domain": true,
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SUB",
+      "id": "f4058ffb47fa48ccb6a86c4c0fbd89d4",
+    },
+  ],
+}

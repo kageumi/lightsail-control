@@ -1,0 +1,107 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans:
+    "Geist Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--foreground);
+  --color-accent: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  --background: #fffafc;
+  --foreground: #2b2327;
+  --card: #ffffff;
+  --primary: #fa70ab;
+  --primary-foreground: #351020;
+  --secondary: #fdeaf2;
+  --secondary-foreground: #7b2e4f;
+  --muted: #faf1f5;
+  --muted-foreground: #7d6a73;
+  --border: #f0e2e9;
+  --input: #e8d7df;
+  --ring: #fa70ab;
+  --destructive: #c23d4e;
+  --radius: 0.625rem;
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+}
+
+.dark {
+  --background: #171214;
+  --foreground: #f6edf2;
+  --card: #1f181c;
+  --primary: #ff8fbe;
+  --primary-foreground: #2e0b19;
+  --secondary: #38232d;
+  --secondary-foreground: #ffc6db;
+  --muted: #261e22;
+  --muted-foreground: #b7a5ae;
+  --border: #3a2d34;
+  --input: #493943;
+  --ring: #ff8fbe;
+  --destructive: #ff8f97;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-width: 320px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a {
+    text-decoration: none;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled]) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
